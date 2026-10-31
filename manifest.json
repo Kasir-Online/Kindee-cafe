@@ -1,0 +1,27 @@
+
+{
+  "id": "./",
+  "name": "Database Resep Kindee",
+  "short_name": "Resep Kindee",
+  "description": "Aplikasi database resep dan bahan baku Kindee Cafe",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#10150d",
+  "theme_color": "#31551e",
+  "icons": [
+    {
+      "src": "./logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

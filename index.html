@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Database Resep Kindee</title>
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#31551e">
+<link rel="icon" type="image/png" href="./logo.png">
+<link rel="apple-touch-icon" href="./logo.png">
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,sans-serif;background:#fff;color:#222;font-size:14px}
+header{padding:17px 12px;border-bottom:2px solid #555;position:sticky;top:0;z-index:1000;background:#fff}
+header h2{margin:0;font-size:21px}
+header p{margin:5px 0 0;color:#666;font-size:12px}
+#utilityBar{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 12px;background:#f5f5f5;border-bottom:1px solid #bbb;position:sticky;top:var(--sticky-header-height,0px);z-index:999}
+#liveClock{font-size:13px;line-height:1.5;color:#333;font-weight:bold}
+#liveClock .date{display:block;color:#666;font-weight:normal;font-size:12px}
+#adminLoginButton{white-space:nowrap;background:#217346;color:#fff;border:0;padding:10px 12px}
+nav{display:flex;border-bottom:1px solid #888;background:#eee;position:sticky;top:var(--sticky-nav-top,0px);z-index:998}
+nav button{flex:1;border:0;border-right:1px solid #aaa;padding:15px 5px;background:#eee;font-weight:bold;border-bottom:3px solid transparent}
+nav button.active{background:#fff;color:#217346;border-bottom:3px solid #217346}
+main{max-width:850px;margin:auto;padding:10px}
+.panel{border:1px solid #888;margin-bottom:12px;background:white}
+.panel-title{margin:0;padding:11px;background:#e7e7e7;border-bottom:1px solid #888;font-size:15px}
+.content{padding:10px}
+label{display:block;font-weight:bold;margin:12px 0 5px}
+input,select,textarea{width:100%;padding:10px;border:1px solid #999;border-radius:0;background:white;color:#222;font-size:14px}
+input:focus,select:focus,textarea:focus{outline:1px solid #217346;border-color:#217346}
+textarea{min-height:55px;resize:vertical}
+button{padding:9px 12px;border:1px solid #888;border-radius:0;background:#f2f2f2;color:#222;font-size:13px;cursor:pointer;-webkit-tap-highlight-color:transparent}
+button:disabled{opacity:.6;cursor:wait}
+button:active{background:#ddd}
+.green{background:#217346;color:white;border-color:#217346}
+.red{color:#c00;background:white}
+.rowbtn{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.rowbtn button{flex:1}
+.small{font-size:12px;color:#666;margin-top:5px}
+.page{display:none}
+.page.active{display:block}
+.searchbox{position:relative}
+#dropdown{display:none;position:absolute;top:100%;left:0;right:0;z-index:20;max-height:240px;overflow:auto;background:#fff;border:1px solid #777}
+.option{padding:11px;border-bottom:1px solid #ccc;cursor:pointer}
+.option:hover{background:#e2f0d9}
+table{width:100%;border-collapse:collapse;table-layout:fixed}
+th,td{border:1px solid #999;padding:8px 6px;text-align:left;overflow-wrap:anywhere}
+th{background:#d9e2f3}
+#recipeBody tr{cursor:pointer}
+#recipeBody tr.ingredient-checked td{background:#fff2a8}
+#recipeBody tr:focus{outline:2px solid #d6a800;outline-offset:-2px}
+#ingredientRows .row{display:grid;grid-template-columns:minmax(0,1fr) 70px 58px 32px}
+#ingredientRows .row>*{width:100%;min-width:0;border:1px solid #aaa;margin:0;padding:8px 4px}
+#ingredientRows .row button{padding:4px}
+#recipeView{display:none}
+#viewNotes{white-space:pre-wrap}
+.recipe-card{border:1px solid #aaa;padding:10px;margin-top:-1px}
+.recipe-name{font-weight:bold;font-size:15px}
+.recipe-meta{font-size:12px;color:#666;margin-top:4px}
+#message{margin-top:10px;color:#217346;overflow-wrap:anywhere}
+#message.error{color:#c00}
+.empty{padding:12px;color:#666}
+.status{padding:8px;background:#f5f5f5;border:1px solid #bbb;margin-bottom:10px;font-size:12px}
+.admin-hidden{display:none!important}
+#adminLock{display:none;position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.72);align-items:center;justify-content:center;padding:20px}
+#adminLock .lock-card{background:#fff;color:#222;padding:22px;border-radius:14px;width:100%;max-width:340px;box-shadow:0 12px 35px #0005}
+#adminLock .lock-card h3{margin:0 0 10px}
+#adminLock .lock-actions{display:flex;gap:8px;margin-top:10px}
+#adminLock .lock-actions button{flex:1}
+#recipeViewLock{display:none;position:fixed;inset:0;z-index:100000;background:rgba(0,0,0,.72);align-items:center;justify-content:center;padding:20px}
+#recipeViewLock .lock-card{background:#fff;color:#222;padding:22px;border-radius:14px;width:100%;max-width:340px;box-shadow:0 12px 35px #0005}
+#recipeViewLock .lock-card h3{margin:0 0 10px}
+#recipeViewLock .lock-actions{display:flex;gap:8px;margin-top:10px}
+#recipeViewLock .lock-actions button{flex:1}
+@media(max-width:380px){main{padding:6px}.content{padding:7px}th,td{padding:6px 4px;font-size:12px}#ingredientRows .row{grid-template-columns:minmax(0,1fr) 55px 48px 29px}#utilityBar{padding:7px 8px;gap:6px}#liveClock{font-size:12px}#liveClock .date{font-size:11px}#adminLoginButton{font-size:11px;padding:9px 8px}header h2{font-size:19px}}
+@media print{header,#utilityBar,nav,#searchPanel,#recipeListPanel,.no-print,#emptyRecipe{display:none!important}body,main,.panel,.content{padding:0;margin:0;border:0}.page{display:none!important}#page-recipe{display:block!important}#recipeView{display:block!important}th,td{border:1px solid #777}}
+  
+/* Tanggal dan jam lebih tebal */
+#liveClock {
+  font-weight: 800;
+  color: #111;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+#liveClock .date {
+  font-weight: 700;
+  color: #333;
+  font-size: 13px;
+}
+
+#liveClock .time {
+  font-weight: 900;
+  color: #14532d;
+  font-size: 17px;
+  letter-spacing: 0.5px;
+}
+
+</style>
+</head>
+<body>
+
+<!-- Kunci akses untuk fitur pengubahan data -->
+<div id="adminLock" role="dialog" aria-modal="true" aria-labelledby="lockTitle">
+  <div class="lock-card">
+    <h3 id="lockTitle">🔐 Admin Kindee</h3>
+    <p>Masukkan sandi untuk melanjutkan perubahan data.</p>
+    <form id="adminLoginForm">
+      <label for="adminPassword">Sandi admin</label>
+      <input id="adminPassword" type="password" autocomplete="current-password" placeholder="Masukkan sandi" required>
+      <div id="adminError" role="alert" style="color:#c00;margin-top:8px"></div>
+      <div class="lock-actions">
+        <button class="green" type="submit">BUKA AKSES</button>
+        <button type="button" onclick="closeAdminLock()">BATAL</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+
+<!-- Kunci sandi khusus untuk melihat resep; tidak membuka hak admin -->
+<div id="recipeViewLock" role="dialog" aria-modal="true" aria-labelledby="recipeLockTitle">
+  <div class="lock-card">
+    <h3 id="recipeLockTitle">🔒 Sandi Lihat Resep</h3>
+    <p>Masukkan sandi untuk melihat daftar dan detail resep.</p>
+    <form id="recipePasswordForm">
+      <label for="recipePasswordInput">Sandi resep</label>
+      <input id="recipePasswordInput" type="password" autocomplete="current-password" placeholder="Masukkan sandi" required>
+      <div id="recipePasswordError" role="alert" style="color:#c00;margin-top:8px"></div>
+      <div class="lock-actions">
+        <button class="green" type="submit">BUKA RESEP</button>
+        <button type="button" onclick="closeRecipeViewLock()">BATAL</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<header>
+  <h2 style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+    <img src="https://raw.githubusercontent.com/Kasir-Online/Kindee-cafe/refs/heads/main/logo.png" alt="Logo Kindee Cafe" style="width:48px;height:48px;object-fit:contain;flex-shrink:0;">
+    <span>DATABASE RESEP KINDEE</span>
+  </h2>
+  
+
+
+<p>Manajemen menu dan bahan baku</p>
+<p style="
+  font-size:10px;
+  color:#777;
+  margin:3px 0 0;
+  padding-left:0;
+  text-align:left;
+  font-weight:normal;
+">
+  @Copyright by Imron Kitchen
+</p>
+</header>
+
+
+
+
+<div id="utilityBar">
+  <div id="liveClock"><span class="date">Memuat tanggal...</span><span class="time">Memuat jam...</span></div>
+  <button id="adminLoginButton" type="button" onclick="mintaSandi(()=>{})">🔐 LOGIN ADMIN</button>
+</div>
+
+<nav>
+  <button id="tab-add" class="active" onclick="showPage('add')">＋ TAMBAH MENU</button>
+  <button id="tab-recipe" onclick="showPage('recipe')">▤ RESEP MENU</button>
+</nav>
+
+<main>
+<section id="page-add" class="page active">
+  <div class="panel" id="formPanel">
+    <h3 class="panel-title" id="formTitle">TAMBAH MENU BARU</h3>
+    <div class="content">
+      <label for="name">Nama menu / resep</label>
+      <input id="name" placeholder="Contoh: Saus Nam Jim">
+
+      <label for="category">Kategori</label>
+      <select id="category"><option>Saus</option><option>Sambal</option><option>Makanan</option><option>Minuman</option><option>Bumbu</option><option>Lainnya</option></select>
+
+      <label for="notes">Catatan resep</label>
+      <textarea id="notes" placeholder="Catatan tambahan (opsional)"></textarea>
+
+      <label for="portions">Hasil resep asli (jumlah porsi)</label>
+      <input id="portions" type="number" min="1" step="any" value="1" placeholder="Contoh: 1, 2, 4 atau 6">
+      <div class="small">Masukkan jumlah porsi yang dihasilkan dari resep asli ini.</div>
+
+      <label>DAFTAR BAHAN</label>
+      <table><thead><tr><th style="width:50%">Nama bahan</th><th style="width:21%">Jumlah</th><th style="width:19%">Satuan</th><th style="width:10%">X</th></tr></thead></table>
+      <div id="ingredientRows"></div>
+
+      <button class="admin-only" data-admin-only style="width:100%;margin-top:8px" onclick="addIngredient()">+ TAMBAH BAHAN</button>
+      <div class="rowbtn">
+        <button id="saveButton" class="green admin-only" data-admin-only onclick="saveRecipe()">SIMPAN MENU</button>
+        <button onclick="resetForm()">RESET FORM</button>
+      </div>
+      <div id="message" role="status"></div>
+    </div>
+  </div>
+</section>
+
+<section id="page-recipe" class="page">
+  <div class="panel" id="searchPanel">
+    <h3 class="panel-title">CARI RESEP MENU</h3>
+    <div class="content">
+      <label for="search">Cari nama menu atau kategori</label>
+      <div class="searchbox">
+        <input id="search" placeholder="Ketik saus, sambal, ayam..." autocomplete="off">
+        <div id="dropdown"></div>
+      </div>
+      <div class="small">Ketik kata pencarian, lalu pilih menu yang muncul.</div>
+      <div class="rowbtn no-print"><button onclick="syncFromSheet()">SINKRON ULANG</button></div>
+    </div>
+  </div>
+
+  <div class="panel" id="recipeListPanel">
+    <h3 class="panel-title">DAFTAR RESEP MENU</h3>
+    <div class="content">
+      <div id="syncStatus" class="status">Menghubungkan ke Google Sheets...</div>
+      <div id="recipeList"></div>
+      <p class="small">Jumlah menu: <b id="count">0</b></p>
+      <div class="rowbtn no-print">
+        <button onclick="exportBackup()">EKSPOR BACKUP</button>
+        <button class="admin-only" data-admin-only onclick="document.getElementById('importFile').click()">IMPOR BACKUP</button>
+        <input id="importFile" type="file" accept=".json" style="display:none" onchange="importBackup(event)">
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" id="recipeView">
+    <h3 class="panel-title">DETAIL RESEP</h3>
+    <div class="content">
+      <h3 id="viewName" style="margin:0 0 6px"></h3>
+      <div id="viewCategory" class="small"></div>
+      <p id="viewNotes"></p>
+      <div class="small" id="originalPortions"></div>
+      <label for="batch">Jumlah porsi yang ingin dibuat</label>
+      <input id="batch" type="number" min="1" step="any" value="" placeholder="Masukkan jumlah porsi" oninput="renderRecipe()">
+      <div class="small">Jumlah bahan menyesuaikan jumlah porsi yang dimasukkan.</div>
+      <div style="overflow-x:auto;margin-top:12px"><table><thead><tr><th style="width:50%">Nama bahan</th><th style="width:22%">Satuan</th><th style="width:28%;text-align:right">Jumlah</th></tr></thead><tbody id="recipeBody"></tbody></table></div>
+      <div class="rowbtn no-print">
+        <button class="green" onclick="window.print()">CETAK RESEP</button>
+        <button onclick="copyRecipe()">SALIN RESEP</button>
+        <button class="admin-only" data-admin-only onclick="editRecipe(selectedId)">EDIT MENU</button>
+        <button class="red admin-only" data-admin-only onclick="deleteRecipe(selectedId)">HAPUS MENU</button>
+      </div>
+    </div>
+  </div>
+  <div class="panel" id="emptyRecipe"><div class="empty">Pilih menu dari daftar atau gunakan kolom pencarian.</div></div>
+</section>
+</main>
+
+<script>
+const API_URL = "https://script.google.com/macros/s/AKfycbz8vBCFnde401ajX5WlRzAWilho-uI9rDgPLb4R7YWAxlZKdnX-Tuk7O_rXJHq5wl2-/exec";
+const KEY = "database_resep_dapur_v2";
+const SANDI_ADMIN = "Thaicafe";
+
+let recipes = [];
+let selectedId = null;
+let editingId = null;
+let apiBusy = false;
+let adminAktif = false;
+let adminAction = null;
+let recipeViewAllowed = false;
+let pendingRecipeAction = null;
+
+function updateLiveClock(){
+  const now = new Date();
+  const dateText = new Intl.DateTimeFormat("id-ID", {weekday:"long",day:"2-digit",month:"long",year:"numeric"}).format(now);
+  const timeText = new Intl.DateTimeFormat("id-ID", {hour:"2-digit",minute:"2-digit",second:"2-digit",hour12:false}).format(now);
+  const clock = document.getElementById("liveClock");
+  if(clock) clock.innerHTML = '<span class="date">' + dateText + '</span><span class="time">🕒 ' + timeText + '</span>';
+}
+function updateStickyOffsets(){
+  const header = document.querySelector("header");
+  const utility = document.getElementById("utilityBar");
+  if(!header || !utility) return;
+  document.documentElement.style.setProperty("--sticky-header-height", header.offsetHeight + "px");
+  document.documentElement.style.setProperty("--sticky-nav-top", (header.offsetHeight + utility.offsetHeight) + "px");
+}
+updateLiveClock();
+setInterval(updateLiveClock,1000);
+window.addEventListener("resize",updateStickyOffsets);
+window.addEventListener("load",updateStickyOffsets);
+
+function esc(v){return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+function setMessage(text,error=false){const el=document.getElementById("message");el.textContent=text;el.classList.toggle("error",error);}
+function setStatus(text){document.getElementById("syncStatus").textContent=text;}
+function persist(){try{localStorage.setItem(KEY,JSON.stringify(recipes));}catch(e){}}
+
+function mintaSandi(action){
+  if(adminAktif){action();return;}
+  adminAction=action;
+  document.getElementById("adminPassword").value="";
+  document.getElementById("adminError").textContent="";
+  document.getElementById("adminLock").style.display="flex";
+  setTimeout(()=>document.getElementById("adminPassword").focus(),50);
+}
+function closeAdminLock(){
+  adminAction=null;
+  document.getElementById("adminLock").style.display="none";
+}
+document.getElementById("adminLoginForm").addEventListener("submit",function(e){
+  e.preventDefault();
+  if(document.getElementById("adminPassword").value!==SANDI_ADMIN){
+    document.getElementById("adminError").textContent="Sandi salah. Coba lagi.";
+    return;
+  }
+  adminAktif=true;
+  document.getElementById("adminLock").style.display="none";
+  const action=adminAction;adminAction=null;
+  document.querySelectorAll("[data-admin-only]").forEach(el=>el.classList.remove("admin-hidden"));
+  document.querySelectorAll("#page-add input,#page-add select,#page-add textarea").forEach(el=>el.disabled=false);
+  document.getElementById("saveButton").disabled=false;
+  if(action)action();
+});
+function lockAdminUI(){
+  adminAktif=false;
+  document.querySelectorAll("[data-admin-only]").forEach(el=>el.classList.add("admin-hidden"));
+  document.querySelectorAll("#page-add input,#page-add select,#page-add textarea").forEach(el=>el.disabled=true);
+  document.getElementById("saveButton").disabled=true;
+}
+function requireAdmin(action){if(!adminAktif){mintaSandi(action);return false;}return true;}
+
+// Sandi melihat resep terpisah dari login admin.
+function mintaSandiLihatResep(action){
+  if(recipeViewAllowed){if(action)action();return;}
+  pendingRecipeAction=action||(()=>showPage("recipe",true));
+  document.getElementById("recipePasswordInput").value="";
+  document.getElementById("recipePasswordError").textContent="";
+  document.getElementById("recipeViewLock").style.display="flex";
+  setTimeout(()=>document.getElementById("recipePasswordInput").focus(),50);
+}
+function closeRecipeViewLock(){
+  pendingRecipeAction=null;
+  document.getElementById("recipeViewLock").style.display="none";
+}
+document.getElementById("recipePasswordForm").addEventListener("submit",function(e){
+  e.preventDefault();
+  if(document.getElementById("recipePasswordInput").value!==SANDI_ADMIN){
+    document.getElementById("recipePasswordError").textContent="Sandi salah. Coba lagi.";
+    return;
+  }
+  recipeViewAllowed=true;
+  document.getElementById("recipeViewLock").style.display="none";
+  const action=pendingRecipeAction;
+  pendingRecipeAction=null;
+  if(action)action();
+});
+
+function loadRecipesFromSheet(){
+ return new Promise((resolve,reject)=>{
+  const callback="recipeCallback_"+Date.now()+"_"+Math.floor(Math.random()*100000);
+  const script=document.createElement("script");let finished=false;
+  const timer=setTimeout(()=>{finish();reject(new Error("Waktu koneksi habis. Periksa akses dan deployment Apps Script."));},25000);
+  function finish(){if(finished)return;finished=true;clearTimeout(timer);script.remove();delete window[callback];}
+  window[callback]=function(data){finish();if(!data||data.success!==true){reject(new Error(data?.error||"Gagal membaca data Google Sheets."));return;}resolve(Array.isArray(data.recipes)?data.recipes:[]);};
+  script.onerror=function(){finish();reject(new Error("Browser gagal memuat respons JSONP dari Apps Script. Periksa URL deployment dan izin akses."));};
+  script.src=API_URL+"?callback="+encodeURIComponent(callback)+"&t="+Date.now();
+  document.body.appendChild(script);
+ });
+}
+async function postToSheet(payload){
+ await fetch(API_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(payload)});
+ let lastError=null;
+ for(let attempt=0;attempt<8;attempt++){
+  await new Promise(resolve=>setTimeout(resolve,1000));
+  try{
+   const data=await loadRecipesFromSheet();
+   if(payload.action==="save"){
+    const found=data.find(r=>String(r.id)===String(payload.recipe.id));
+    if(found)return data;
+   }else if(payload.action==="delete"){
+    if(!data.some(r=>String(r.id)===String(payload.id)))return data;
+   }
+  }catch(err){lastError=err;}
+ }
+ throw new Error(lastError?"Tidak dapat memverifikasi data di Sheet: "+lastError.message:"Data belum terlihat di Sheet. Periksa Code.gs dan versi deployment.");
+}
+async function syncFromSheet(){
+ if(apiBusy)return;
+ setStatus("Mengambil data dari Google Sheets...");
+ try{
+  const previousId=selectedId;recipes=await loadRecipesFromSheet();persist();renderRecipeList();
+  if(previousId!==null){const match=recipes.find(r=>String(r.id)===String(previousId));if(match)showRecipe(match.id);else{selectedId=null;document.getElementById("recipeView").style.display="none";document.getElementById("emptyRecipe").style.display="block";}}
+  setStatus("Terhubung. Data dibaca dari Google Sheets.");
+ }catch(err){setStatus("Gagal sinkron: "+err.message);}
+}
+function showPage(page, bypassRecipeLock=false){
+ if(page==="recipe"&&!recipeViewAllowed&&!bypassRecipeLock){
+   mintaSandiLihatResep(()=>showPage("recipe",true));
+   return;
+ }
+ document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
+ document.querySelectorAll("nav button").forEach(b=>b.classList.remove("active"));
+ document.getElementById("page-"+page).classList.add("active");document.getElementById("tab-"+page).classList.add("active");
+ document.getElementById("dropdown").style.display="none";window.scrollTo(0,0);
+ if(page==="recipe")syncFromSheet();
+}
+
+function addIngredient(name="",qty="",unit="gr"){
+ if(!requireAdmin(()=>addIngredient(name,qty,unit)))return;
+ const row=document.createElement("div");row.className="row";
+ row.innerHTML=`<input class="ingName" placeholder="Bahan" value="${esc(name)}"><input class="ingQty" type="number" min="0" step="any" placeholder="0" value="${esc(qty)}"><input class="ingUnit" placeholder="gr" value="${esc(unit)}"><button type="button" aria-label="Hapus bahan">×</button>`;
+ row.querySelector("button").onclick=()=>{if(!requireAdmin(()=>row.remove()))return;row.remove();};
+ document.getElementById("ingredientRows").appendChild(row);
+}
+function resetForm(){
+ editingId=null;document.getElementById("formTitle").textContent="TAMBAH MENU BARU";
+ document.getElementById("name").value="";document.getElementById("category").value="Saus";document.getElementById("notes").value="";
+ document.getElementById("portions").value="1";
+ document.getElementById("ingredientRows").innerHTML="";setMessage("");
+ if(adminAktif)addIngredient();else{
+  const row=document.createElement("div");row.className="row admin-hidden";
+  row.innerHTML='<input class="ingName" placeholder="Bahan" disabled><input class="ingQty" type="number" placeholder="0" disabled><input class="ingUnit" placeholder="gr" disabled><button type="button" disabled>×</button>';
+  document.getElementById("ingredientRows").appendChild(row);
+ }
+}
+async function saveRecipe(){
+ if(!requireAdmin(()=>saveRecipe()))return;
+ if(apiBusy)return;
+ const name=document.getElementById("name").value.trim();if(!name){alert("Nama menu wajib diisi.");return;}
+ const ingredients=[];
+ for(const row of document.querySelectorAll("#ingredientRows .row")){
+  const n=row.querySelector(".ingName").value.trim(),q=row.querySelector(".ingQty").value,u=row.querySelector(".ingUnit").value.trim()||"gr";
+  if(!n&&q==="")continue;
+  if(!n||q===""||!Number.isFinite(Number(q))||Number(q)<0){alert("Periksa nama bahan dan jumlahnya.");return;}
+  ingredients.push({name:n,qty:Number(q),unit:u});
+ }
+ if(!ingredients.length){alert("Tambahkan minimal satu bahan.");return;}
+ const portions=Number(document.getElementById("portions").value);
+ if(!Number.isFinite(portions)||portions<=0){alert("Masukkan jumlah porsi asli yang valid.");return;}
+ const recipe={id:editingId||makeId(),name,category:document.getElementById("category").value,notes:document.getElementById("notes").value.trim(),portions,ingredients};
+ apiBusy=true;document.getElementById("saveButton").disabled=true;setMessage("Menyimpan ke Google Sheets...");setStatus("Mengirim data...");
+ try{recipes=await postToSheet({action:"save",recipe});persist();renderRecipeList();resetForm();setMessage("Resep berhasil disimpan ke Google Sheets.");setStatus("Sinkronisasi berhasil.");}
+ catch(err){setMessage("Gagal menyimpan: "+err.message,true);setStatus("Penyimpanan gagal. Periksa deployment Apps Script.");}
+ finally{apiBusy=false;document.getElementById("saveButton").disabled=false;}
+}
+function makeId(){return "r"+Date.now()+Math.random().toString(36).slice(2,7);}
+function editRecipe(id){
+ if(!requireAdmin(()=>editRecipe(id)))return;
+ const r=recipes.find(x=>String(x.id)===String(id));if(!r)return;
+ editingId=r.id;document.getElementById("formTitle").textContent="EDIT MENU";document.getElementById("name").value=r.name;
+ document.getElementById("category").value=r.category;document.getElementById("notes").value=r.notes||"";
+ document.getElementById("portions").value=(Number(r.portions)>0 ? r.portions : 1);
+ document.getElementById("ingredientRows").innerHTML="";r.ingredients.forEach(i=>addIngredient(i.name,i.qty,i.unit));
+ showPage("add");document.getElementById("formPanel").scrollIntoView({behavior:"smooth"});
+}
+async function deleteRecipe(id){
+ if(!requireAdmin(()=>deleteRecipe(id)))return;
+ const r=recipes.find(x=>String(x.id)===String(id));if(!r||apiBusy)return;
+ if(!confirm("Hapus menu "+r.name+" dari Google Sheets?"))return;
+ apiBusy=true;setStatus("Menghapus resep...");
+ try{recipes=await postToSheet({action:"delete",id:r.id});persist();renderRecipeList();selectedId=null;document.getElementById("recipeView").style.display="none";document.getElementById("emptyRecipe").style.display="block";setStatus("Resep berhasil dihapus dari Google Sheets.");alert("Menu berhasil dihapus.");}
+ catch(err){setStatus("Gagal menghapus: "+err.message);alert(err.message);}
+ finally{apiBusy=false;}
+}
+function renderRecipeList(){
+ const list=document.getElementById("recipeList");list.innerHTML="";
+ const sorted=[...recipes].sort((a,b)=>a.name.localeCompare(b.name));
+ if(!sorted.length)list.innerHTML='<div class="empty">Belum ada resep di Google Sheets.</div>';
+ else sorted.forEach(r=>{
+  const card=document.createElement("div");card.className="recipe-card";
+  const name=document.createElement("div");name.className="recipe-name";name.textContent=r.name;
+  const meta=document.createElement("div");meta.className="recipe-meta";meta.textContent=r.category+" · "+r.ingredients.length+" bahan";
+  const btn=document.createElement("button");btn.textContent="LIHAT RESEP";btn.className="green";btn.style.width="100%";btn.style.marginTop="9px";btn.onclick=()=>showRecipe(r.id);
+  card.append(name,meta,btn);list.appendChild(card);
+ });
+ document.getElementById("count").textContent=recipes.length;
+}
+function showRecipe(id){
+ if(!recipeViewAllowed){mintaSandiLihatResep(()=>showRecipe(id));return;}
+ const r=recipes.find(x=>String(x.id)===String(id));if(!r)return;
+ // Pilihan bahan hanya berlaku untuk resep yang sedang dibuka.
+ if(String(selectedId)!==String(r.id)) selectedIngredientIndex=null;
+ selectedId=r.id;document.getElementById("recipeView").style.display="block";document.getElementById("emptyRecipe").style.display="none";
+ document.getElementById("viewName").textContent=r.name;document.getElementById("viewCategory").textContent="Kategori: "+r.category;document.getElementById("viewNotes").textContent=r.notes||"";
+ const originalPortions=Number(r.portions)||1;
+ document.getElementById("originalPortions").textContent="Takaran asli resep ini: "+fmt(originalPortions)+" porsi.";
+ document.getElementById("batch").value=originalPortions;renderRecipe();document.getElementById("recipeView").scrollIntoView({behavior:"smooth",block:"start"});
+}
+function fmt(n){return Number(n.toFixed(4)).toLocaleString("id-ID");}
+let selectedIngredientIndex = null;
+function renderRecipe(){
+ const r=recipes.find(x=>String(x.id)===String(selectedId));if(!r)return;
+ const rawTarget=document.getElementById("batch").value.trim();
+ let targetPortions=Number(rawTarget);
+ const originalPortions=Number(r.portions)||1;
+ if(rawTarget===""||!Number.isFinite(targetPortions)||targetPortions<=0)targetPortions=originalPortions;
+ const multiplier=targetPortions/originalPortions;
+ document.getElementById("recipeBody").innerHTML=r.ingredients.map((i,index)=>`<tr class="ingredient-row${selectedIngredientIndex===index?" ingredient-checked":""}" data-ingredient-index="${index}" tabindex="0" role="button" aria-pressed="${selectedIngredientIndex===index?"true":"false"}" title="Ketuk untuk memilih bahan"><td>${esc(i.name)}</td><td>${esc(i.unit)}</td><td style="text-align:right">${fmt(i.qty*multiplier)}</td></tr>`).join("");
+}
+function toggleIngredientRow(row){
+ if(!row || !row.matches("#recipeBody tr"))return;
+ selectedIngredientIndex = Number(row.dataset.ingredientIndex);
+ document.querySelectorAll("#recipeBody tr").forEach((item,index)=>{
+   const selected=index===selectedIngredientIndex;
+   item.classList.toggle("ingredient-checked",selected);
+   item.setAttribute("aria-pressed",selected?"true":"false");
+ });
+}
+document.getElementById("recipeBody").addEventListener("click",function(e){
+ const row=e.target.closest("tr");
+ if(row)toggleIngredientRow(row);
+});
+document.getElementById("recipeBody").addEventListener("keydown",function(e){
+ if(e.key!=="Enter"&&e.key!==" ")return;
+ const row=e.target.closest("tr");
+ if(row){e.preventDefault();toggleIngredientRow(row);}
+});
+const search=document.getElementById("search"),dropdown=document.getElementById("dropdown");
+search.addEventListener("input",()=>{
+ const q=search.value.trim().toLowerCase();dropdown.innerHTML="";
+ if(!q){dropdown.style.display="none";return;}
+ const matches=recipes.filter(r=>(r.name+" "+r.category).toLowerCase().includes(q));
+ if(!matches.length){const item=document.createElement("div");item.className="option";item.textContent="Menu tidak ditemukan.";dropdown.appendChild(item);}
+ else matches.forEach(r=>{const item=document.createElement("div");item.className="option";item.innerHTML=`<b>${esc(r.name)}</b><div class="small">${esc(r.category)} · ${r.ingredients.length} bahan</div>`;item.onclick=()=>{search.value=r.name;dropdown.style.display="none";showRecipe(r.id);};dropdown.appendChild(item);});
+ dropdown.style.display="block";
+});
+document.addEventListener("click",e=>{if(!e.target.closest(".searchbox"))dropdown.style.display="none";});
+function copyRecipe(){
+ const r=recipes.find(x=>String(x.id)===String(selectedId));if(!r)return;
+ const rawTarget=document.getElementById("batch").value.trim();
+ let targetPortions=Number(rawTarget);
+ const originalPortions=Number(r.portions)||1;
+ if(rawTarget===""||!Number.isFinite(targetPortions)||targetPortions<=0)targetPortions=originalPortions;
+ const multiplier=targetPortions/originalPortions;
+ const text=[r.name,"Kategori: "+r.category,"Jumlah porsi: "+fmt(targetPortions),"Hasil resep asli: "+fmt(originalPortions)+" porsi","","BAHAN:",...r.ingredients.map(i=>i.name+" — "+fmt(i.qty*multiplier)+" "+i.unit)].join("\n");
+ if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(text).then(()=>alert("Resep berhasil disalin.")).catch(()=>window.prompt("Salin resep:",text));else window.prompt("Salin resep:",text);
+}
+function exportBackup(){
+ const blob=new Blob([JSON.stringify(recipes,null,2)],{type:"application/json"});const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download="backup-resep.json";a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+async function importBackup(event){
+ if(!requireAdmin(()=>importBackup(event)))return;
+ const file=event.target.files[0];if(!file)return;
+ try{
+  const data=JSON.parse(await file.text());
+  const valid=Array.isArray(data)&&data.every(r=>r&&typeof r.name==="string"&&typeof r.category==="string"&&Array.isArray(r.ingredients)&&r.ingredients.every(i=>typeof i.name==="string"&&Number.isFinite(Number(i.qty))&&typeof i.unit==="string"));
+  if(!valid)throw new Error("Format backup tidak valid.");
+  if(!confirm("Impor akan mengirim semua resep ke Google Sheets. Lanjutkan?"))return;
+  if(apiBusy)return;apiBusy=true;setStatus("Mengimpor resep ke Google Sheets...");
+  for(const r of data){const recipe={id:r.id||makeId(),name:r.name,category:r.category,notes:r.notes||"",portions:Number(r.portions)>0?Number(r.portions):1,ingredients:r.ingredients};await postToSheet({action:"save",recipe});}
+  await syncFromSheet();alert("Impor selesai. Periksa daftar resep di Google Sheets.");
+ }catch(err){alert("Impor gagal: "+err.message);setStatus("Impor gagal.");}
+ finally{apiBusy=false;event.target.value="";}
+}
+async function init(){
+ updateStickyOffsets();
+ lockAdminUI();
+ // Tampilkan area form namun nonaktifkan pengisian sampai admin membuka akses.
+ document.querySelectorAll("#page-add input,#page-add select,#page-add textarea").forEach(el=>el.disabled=true);
+ document.getElementById("saveButton").disabled=true;
+ document.querySelectorAll("#ingredientRows button").forEach(el=>el.disabled=true);
+ renderRecipeList();
+ await syncFromSheet();
+}
+init();
+</script>
+</body>
+</html>
